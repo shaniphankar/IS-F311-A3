@@ -13,7 +13,7 @@ using namespace std;
 #define SCREEN_HEIGHT 720
 
 vector<glm::vec2> controlPoints;
-vector<glm::vec3> curvePoints;
+vector<glm::vec2> curvePoints;
 glm::vec2 clickPoint;
 int currentPointIndex;
 int actualWidth;
@@ -65,14 +65,16 @@ void mouseInteraction(int button, int state, int x, int y)
 		clickPoint=glm::vec2(mousePos);
 		beginTime=clock();
 	}
+
 	if(button==GLUT_LEFT_BUTTON && state == GLUT_UP)
 	{
 		cout<<mousePos.x<<" "<<mousePos.y<<endl;
 		endTime=clock();
 		timeDiff=float(endTime-beginTime)/CLOCKS_PER_SEC;
+		cout<<timeDiff<<endl;
 		if(timeDiff<=0.02||currentPointIndex<0)
 		{
-			addControlPoint(clickPoint);
+			addControlPoint(clickPoint,controlPoints.size());
 			timeDiff=0;
 		}
 		else if(timeDiff>0.02)
@@ -81,21 +83,62 @@ void mouseInteraction(int button, int state, int x, int y)
 			addControlPoint(mousePos,currentPointIndex);
 		}
 	}
+
+	if(button==GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+	{
+		int i=closestPointIndex(mousePos);
+		deleteControlPoint(i);
+	}
 }
 
+glm::vec2 Lerp(glm::vec2 A,glm::vec2 B,float t)
+{
+	return (1-t)*A + t*B;
+}
+glm::vec2 getCurvePoint(int degree, int i, float t)
+{
+	if(degree==0)
+		return controlPoints[i];
+	glm::vec2 P1 = getCurvePoint(degree-1,i,t);
+	glm::vec2 P2 = getCurvePoint(degree-1,i+1,t);
+	return Lerp(P1,P2,t);
+}
+
+void drawBezierCurve()
+{
+	int degree = controlPoints.size() -1;
+	if(degree < 0)
+		return;
+
+	for(int i=0;i<controlPoints.size();i++)
+	{
+		plot(controlPoints[i].x,controlPoints[i].y);
+	}
+	curvePoints.clear();
+	for(float t=0;t<1;t+=0.001)
+	{
+		glm::vec2 P = getCurvePoint(degree,0,t);
+		curvePoints.push_back(P);
+		plot(P.x,P.y); 
+	}
+}
 void myDisplay(void)
 {
 	glClear (GL_COLOR_BUFFER_BIT);
 	glColor3f (0.0, 0.0, 0.0);
 	glPointSize(2.0);
-	for(int i=0;i<200;i++)
-	{
-		plot(i,0);
-	}
 	actualWidth=glutGet(GLUT_WINDOW_WIDTH);
 	actualHeight=glutGet(GLUT_WINDOW_HEIGHT);
+	drawBezierCurve();
 	glutSwapBuffers ();
 }
+
+void update(int data)
+{
+	glutTimerFunc(30,update,0);
+	glutPostRedisplay();
+}
+
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
@@ -105,6 +148,7 @@ int main(int argc, char** argv)
 	glutCreateWindow ("Curve");
 	glutDisplayFunc(myDisplay);
 	glutMouseFunc(mouseInteraction);
+	glutTimerFunc(30,update,0);
 	myInit ();
 	glutMainLoop();
 }
