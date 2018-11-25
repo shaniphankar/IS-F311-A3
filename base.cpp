@@ -10,7 +10,7 @@
 using namespace std;
 
 #define SCREEN_WIDTH 1366
-#define SCREEN_HEIGHT 720
+#define SCREEN_HEIGHT 768
 
 vector<glm::vec2> controlPoints;
 vector<glm::vec2> curvePoints;
@@ -109,11 +109,12 @@ void drawBezierCurve()
 	int degree = controlPoints.size() -1;
 	if(degree < 0)
 		return;
-
+	glPointSize(4.0);	
 	for(int i=0;i<controlPoints.size();i++)
 	{
 		plot(controlPoints[i].x,controlPoints[i].y);
 	}
+	glPointSize(2.0);
 	curvePoints.clear();
 	for(float t=0;t<1;t+=0.001)
 	{
@@ -125,8 +126,6 @@ void drawBezierCurve()
 void myDisplay(void)
 {
 	glClear (GL_COLOR_BUFFER_BIT);
-	glColor3f (0.0, 0.0, 0.0);
-	glPointSize(2.0);
 	actualWidth=glutGet(GLUT_WINDOW_WIDTH);
 	actualHeight=glutGet(GLUT_WINDOW_HEIGHT);
 	drawBezierCurve();
